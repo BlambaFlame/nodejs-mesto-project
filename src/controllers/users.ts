@@ -99,7 +99,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
       name, about, avatar, email, password: hashedPassword,
     });
 
-    res.status(HTTP_STATUS.Created).json({
+    return res.status(HTTP_STATUS.Created).json({
       _id: user._id,
       email: user.email,
       name: user.name,
@@ -108,14 +108,16 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(VALIDATION_USER_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
-    } else if (isMongoServerError(error) && error.code === 11000) {
-      const field = Object.keys(error.keyValue || {})[0];
-      next(createDuplicateError(`${DUPLICATE_USER_ERROR} ${field}`));
+      return next(createValidationError(VALIDATION_USER_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    if (isMongoServerError(error) && error.code === 11000) {
+      const field = Object.keys(error.keyValue || {})[0];
+      return next(createDuplicateError(`${DUPLICATE_USER_ERROR} ${field}`));
+    }
+    return next(error);
   }
 };
 
@@ -139,14 +141,15 @@ export const updateUser = async (
       .lean()
       .orFail(createNotFoundError(NOT_FOUND_USER_DATA_ERROR));
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(VALIDATION_USER_PROFILE_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
+      return next(createValidationError(VALIDATION_USER_PROFILE_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    return next(error);
   }
 };
 
@@ -165,13 +168,14 @@ export const updateAvatar = async (req: Request, res: Response, next: NextFuncti
       .lean()
       .orFail(createNotFoundError(NOT_FOUND_USER_DATA_ERROR));
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(VALIDATION_USER_AVATAR_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
+      return next(createValidationError(VALIDATION_USER_AVATAR_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    return next(error);
   }
 };

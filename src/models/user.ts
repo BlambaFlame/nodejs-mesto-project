@@ -1,8 +1,8 @@
-import mongoose, { Error } from 'mongoose';
+import mongoose from 'mongoose';
 import isEmail from 'validator/lib/isEmail';
 import bcrypt from 'bcryptjs';
-import { createServerError, createUnauthorizedError } from '../utils/errors';
-import { INCORRECT_AUTH_DATA_ERROR, SERVER_ERROR } from '../utils/constants';
+import { createUnauthorizedError } from '../utils/errors';
+import { INCORRECT_AUTH_DATA_ERROR } from '../utils/constants';
 import { urlValidator } from '../utils/validators';
 
 export interface IUser {
@@ -68,13 +68,13 @@ userSchema.static('findUserByCredentials', async function findUserByCredentials(
   password: string,
 ) {
   const user = await this.findOne({ email }).select('+password').lean();
-  
+
   if (!user) {
     throw createUnauthorizedError(INCORRECT_AUTH_DATA_ERROR);
   }
 
   const matched = await bcrypt.compare(password, user.password);
-  
+
   if (!matched) {
     throw createUnauthorizedError(INCORRECT_AUTH_DATA_ERROR);
   }

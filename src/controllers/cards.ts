@@ -42,17 +42,19 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
     const owner = req.user._id;
     const card = await Card.create({ name, link, owner });
 
-    res.status(HTTP_STATUS.Created).json({ card });
+    return res.status(HTTP_STATUS.Created).json({ card });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(VALIDATION_CARD_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
-    } else if (isMongoServerError(error) && error.code === 11000) {
-      const field = Object.keys(error.keyValue || {})[0];
-      next(createDuplicateError(`${DUPLICATE_CARD_ERROR} ${field}`));
+      return next(createValidationError(VALIDATION_CARD_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    if (isMongoServerError(error) && error.code === 11000) {
+      const field = Object.keys(error.keyValue || {})[0];
+      return next(createDuplicateError(`${DUPLICATE_CARD_ERROR} ${field}`));
+    }
+    return next(error);
   }
 };
 
@@ -65,13 +67,13 @@ export const removeCard = async (req: Request, res: Response, next: NextFunction
       .lean()
       .orFail(createNotFoundError(NOT_FOUND_CARD_DATA_ERROR));
     if (_id !== card.owner) {
-      next(createForbiddenError(COPYRIGHT_ERROR));
+      return next(createForbiddenError(COPYRIGHT_ERROR));
     }
     await Card.deleteOne({ _id: card._id });
 
-    res.json({ card });
+    return res.json({ card });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -86,14 +88,15 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
       .lean()
       .orFail(createNotFoundError(NOT_FOUND_CARD_DATA_ERROR));
 
-    res.json({ card });
+    return res.json({ card });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(INCORRECT_LIKE_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
+      return next(createValidationError(INCORRECT_LIKE_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    return next(error);
   }
 };
 
@@ -108,13 +111,14 @@ export const dislikeCard = async (req: Request, res: Response, next: NextFunctio
       .lean()
       .orFail(createNotFoundError(NOT_FOUND_CARD_DATA_ERROR));
 
-    res.json({ card });
+    return res.json({ card });
   } catch (error) {
     if (error instanceof mongoose.Error.ValidationError) {
-      next(createValidationError(INCORRECT_LIKE_DATA_ERROR));
-    } else if (error instanceof mongoose.Error.CastError) {
-      next(createValidationError(INCORRECT_DATA_ERROR));
+      return next(createValidationError(INCORRECT_LIKE_DATA_ERROR));
     }
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return next(createValidationError(INCORRECT_DATA_ERROR));
+    }
+    return next(error);
   }
 };

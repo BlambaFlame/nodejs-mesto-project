@@ -14,12 +14,12 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   try {
     token = req.cookies.jwt;
     payload = jwt.verify(token, NODE_ENV === 'production' ? JWT_SECRET : DEV_JWT_SECRET);
-  } catch (err) {
-    next(createUnauthorizedError(INCORRECT_AUTH_DATA_ERROR));
+  } catch {
+    return next(createUnauthorizedError(INCORRECT_AUTH_DATA_ERROR));
   }
 
   req.user = payload as { _id: string };
-  next();
+  return next();
 };
 
 export default auth;
